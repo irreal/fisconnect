@@ -7,10 +7,7 @@ describe('ConfigService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        {
-          provide: ConfigService,
-          useValue: new ConfigService('.env'),
-        },
+        ConfigService,
       ],
     }).compile();
 

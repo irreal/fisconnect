@@ -1,10 +1,11 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
+import { ConfigService } from '../config/config.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService, private readonly configService: ConfigService) { }
 
   @Get('token')
   async createToken(): Promise<any> {
@@ -14,6 +15,6 @@ export class AuthController {
   @Get('data')
   @UseGuards(AuthGuard())
   findAll() {
-    return 'it worked!';
+    return `it worked! ${this.configService.isApiAuthEnabled}`;
   }
 }

@@ -1,43 +1,32 @@
-import * as dotenv from 'dotenv';
-import * as Joi from 'joi';
-import * as fs from 'fs';
-
-export interface EnvConfig {
-  [key: string]: string;
-}
+import { NotFoundException } from '@nestjs/common';
+import { config } from 'dotenv';
 
 export class ConfigService {
-  private readonly envConfig: EnvConfig;
-
-  constructor(filePath: string) {
-    const config = dotenv.parse(fs.readFileSync(filePath));
-    this.envConfig = this.validateInput(config);
+  constructor() {
+    config();
+    this.CheckRequiredConfigItems([]);
   }
-
-  /**
-   * Ensures all needed variables are set, and returns the validated JavaScript object
-   * including the applied default values.
-   */
-  private validateInput(envConfig: EnvConfig): EnvConfig {
-    const envVarsSchema: Joi.ObjectSchema = Joi.object({
-      NODE_ENV: Joi.string()
-        .valid(['development', 'production', 'test', 'provision'])
-        .default('development'),
-      PORT: Joi.number().default(3000),
-      API_AUTH_ENABLED: Joi.boolean().required(),
-    });
-
-    const { error, value: validatedEnvConfig } = Joi.validate(
-      envConfig,
-      envVarsSchema,
-    );
-    if (error) {
-      throw new Error(`Config validation error: ${error.message}`);
-    }
-    return validatedEnvConfig;
-  }
-
   get isApiAuthEnabled(): boolean {
-    return Boolean(this.envConfig.API_AUTH_ENABLED);
+    return (
+      this.env('API_AUTH_ENABLED', '')
+        .toLowerCase()
+        .trim() !== 'false'
+    );
+  }
+
+  env(key: string, defaultValue: string = null): string {
+    if (process.env[key]) {
+      return process.env[key];
+    }
+    return defaultValue;
+  }
+  CheckRequiredConfigItems(requiredItems) {
+    requiredItems.forEach(i => {
+      if (process.env[i] === undefined) {
+        throw new NotFoundException(
+          `Required Configuration item ${i} is missing.`,
+        );
+      }
+    });
   }
 }
